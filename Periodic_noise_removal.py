@@ -2,8 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torchvision import models, transforms
-from params import max_size, path_name_noise
+from params import max_size, path_name_noise, layer_weights
 from PIL import Image
+import sys
 
 
 def get_vgg19_model():
@@ -111,49 +112,41 @@ def find_gram_matrix(tensor):
 
 
 def generate_random_image():
-    image_array = np.random.rand(100,100,3) * 255
+    image_array = np.random.rand(100, 100, 3) * 255
     im = Image.fromarray(image_array.astype('uint8')).convert('RGBA')
     im.save(path_name_noise)
 
-def train_image(model, optimizer, steps):
-progress = 0
-for ii in range(1, steps + 1):
-    progress += 1
-    # get the features from your target image
-    target_features = get_features(target, vgg)
 
-    # the content loss
-    content_loss = torch.mean((target_features['conv4_2'] - content_features['conv4_2']) ** 2)
-
-    # the style loss
-    # initialize the style loss to 0
-    style_loss = 0
-    # then add to it for each layer's gram matrix loss
-    for layer in style_weights:
-        # get the "target" style representation for the layer
-        target_feature = target_features[layer]
-        target_gram = gram_matrix(target_feature)
-        _, d, h, w = target_feature.shape
-        # get the "style" style representation
-        style_gram = style_grams[layer]
-        # the style loss for one layer, weighted appropriately
-        layer_style_loss = style_weights[layer] * torch.mean((target_gram - style_gram) ** 2)
-        # add to the style loss
-        style_loss += layer_style_loss / (d * h * w)
-
-    # calculate the *total* loss
-    total_loss = content_weight * content_loss + style_weight * style_loss
-
-    # update your target image
-    optimizer.zero_grad()
-    total_loss.backward()
-    optimizer.step()
-
-    # display intermediate images and print the loss
-    if ii % show_every == 0:
-        sys.stdout.write("\rProgress:" +
-                         str(100 * progress / float(ii))[:4] \
-                         + "%" + " Total loss:" + str((total_loss.item()))[0:5] \
-                         + " Style Transfer ")
-        plt.imshow(im_convert(target))
-        plt.show()
+def train_image(model, optimizer, steps, rand_image, image_grams, show_every=500):
+    progress = 0
+    for index in range(1, steps + 1):
+        progress += 1
+        # get the features from your target image
+        image_features = get_features(rand_image, model)
+        # the  loss
+        noise_loss = 0
+        for layer in layer_weights:
+            # get the "target" style representation for the layer
+            image_feature_map = image_features[layer]
+            image_gram = find_gram_matrix(image_feature_map)
+            _, depth, height, width = image_feature_map.shape
+            target_gram = image_grams[layer]
+            # the style loss for one layer, weighted appropriately
+            layer_style_loss = layer_weights[layer] * torch.mean((target_gram - image_grams) ** 2)
+            # add to the style loss
+            noise_loss += layer_style_loss / (depth * height * width)
+        # calculate the *total* loss
+        total_loss = noise_loss
+        # update your target image
+        optimizer.zero_grad()
+        total_loss.backward()
+        optimizer.step()
+        # display intermediate images and print the loss
+        if index % show_every == 0:
+            sys.stdout.write("\rProgress:" +
+                             str(100 * progress / float(index))[:4]
+                             + "%" + " Total loss:" + str((total_loss.item()))[0:5]
+                             + " Style Transfer ")
+            plt.imshow(im_convert(rand_image))
+            plt.show()
+    return rand_image

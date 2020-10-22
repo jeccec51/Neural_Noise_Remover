@@ -7,3 +7,4 @@ layer_weights = {'conv1_1': 1.,
                  'conv4_1': 0.2,
                  'conv5_1': 0.2}
 lr = 0.03
+show_every = 400

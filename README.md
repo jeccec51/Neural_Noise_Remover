@@ -39,7 +39,7 @@ Ok … lets break it down.
 4.	Now we place each of this unrolled 1D arras as rows of a matrix. So, if a layer has 16 feature maps of 112 x 112 features, the column matrix described in point 4 will have a dimension of 16 X 12544. 
 5.	At this point we need to calculate the cross-correlation between images, so the cc matrix will be of dimension 16 x 16 in the example mentioned in point 4 (in paper this is termed as grammatrix)
 6.	Now in this way we will calculate the gram matrices for 1_1, 2_1, 3_1, 4_1, 5_1 layers and add them as per the weight defined in point 1. 
-7.	We will start with a random noise image, and will calculate the lose as mean squared error between the final matrix obtained from point 6 and noise image. The pixels of the noise image will be adjusted using back propagation , and finally we get an image similar to gram matrix. The gram matrix is nothing but a representation of repeating similar patterns in the image. 
+7.	We will start with a random noise image, and will calculate the loss as mean squared error between the final matrix obtained from point 6 and noise image. The pixels of the noise image will be adjusted using back propagation , and finally we get an image similar to gram matrix. The gram matrix is nothing but a representation of repeating similar patterns in the image. 
 8.	In the next step this periodic noise image will be subtracted from original to remove major chunk of periodic noise in the image.
 
 get_vgg19_model()
@@ -65,4 +65,4 @@ def generate_random_image():
 Generates a random noise image using PIL
 def train_image(model, optimizer, steps, rand_image, image_grams, show_every=500):
 
-Train the image. Optimizer is Adams. Lose is mean squared error 
+Train the image. Optimizer is Adams. Loss is mean squared error 
